@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Mission Map</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; width: 100%; background: #1a1a1a; overflow: hidden; }
+        #map { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: #1a1a1a; }
+        .waypoint-label {
+            background: #0af; color: white; border: 2px solid white;
+            border-radius: 50%; width: 24px !important; height: 24px !important;
+            text-align: center; font-weight: bold; font-family: Consolas;
+            line-height: 20px; font-size: 12px;
+        }
+        .drone-icon {
+            background: #f44; color: white; border: 2px solid white;
+            border-radius: 50%; width: 18px !important; height: 18px !important;
+        }
+        .leaflet-tooltip { background: #1e1e1e; color: #eee; border: 1px solid #0af; }
+        .leaflet-popup-content-wrapper { background: #1e1e1e; color: #eee; }
+        .leaflet-popup-tip { background: #1e1e1e; }
+    </style>
+</head>
+<body>
+<div id="map"></div>
+<script>
+    // Initialize map immediately — works in both Qt and browser
+    var map = L.map('map').setView([23.8706, 90.4099], 17);
+
+    // Use CartoDB tiles — no Referer restriction, dark theme matches UI
+    var darkTiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO',
+        subdomains: 'abcd',
+        maxZoom: 20
+    });
+
+    var satelliteTiles = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { attribution: 'Esri', maxZoom: 19 }
+    );
+
+    darkTiles.addTo(map);
+    L.control.layers({ "Dark": darkTiles, "Satellite": satelliteTiles }).addTo(map);
+
+    var waypointMarkers = [];
+    var polyline = L.polyline([], {color: '#0af', weight: 3, opacity: 0.8}).addTo(map);
+    var droneMarker = null;
+    var bridge = null;
+
+    // Try to connect to Python bridge via QWebChannel — only works in Qt
+    function setupBridge() {
+        if (typeof QWebChannel === 'undefined' || typeof qt === 'undefined') {
+            console.log("QWebChannel not available (running in browser?)");
+            return;
+        }
+        try {
+            new QWebChannel(qt.webChannelTransport, function(channel) {
+                bridge = channel.objects.bridge;
+                console.log("Bridge connected");
+            });
+        } catch (e) {
+            console.log("Bridge setup failed: " + e);
+        }
+    }
+
+    // Load qwebchannel.js dynamically — only if in Qt context
+    var script = document.createElement('script');
+    script.src = 'qrc:///qtwebchannel/qwebchannel.js';
+    script.onload = setupBridge;
+    script.onerror = function() { console.log("qwebchannel.js not found (browser context)"); };
+    document.head.appendChild(script);
+
+    // Click on map → send to Python
+    map.on('click', function(e) {
+        if (bridge) {
+            bridge.add_waypoint_from_map(e.latlng.lat, e.latlng.lng);
+        } else {
+            console.log("Click at " + e.latlng.lat + "," + e.latlng.lng + " (no bridge)");
+        }
+    });
+
+    function refreshWaypoints(waypoints) {
+        // waypoints = [[lat, lon, alt, cmd], ...]
+        waypointMarkers.forEach(function(m) { map.removeLayer(m); });
+        waypointMarkers = [];
+        var latlngs = [];
+
+        waypoints.forEach(function(wp, i) {
+            var icon = L.divIcon({
+                className: 'waypoint-label',
+                html: String(i),
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+            var marker = L.marker([wp[0], wp[1]], {icon: icon, draggable: true})
+                .addTo(map)
+                .bindTooltip("WP" + i + ": " + wp[3] + "<br>Alt: " + wp[2] + "m");
+
+            marker.on('dragend', function(e) {
+                var pos = e.target.getLatLng();
+                if (bridge) {
+                    bridge.update_waypoint_position(i, pos.lat, pos.lng);
+                }
+            });
+
+            waypointMarkers.push(marker);
+            latlngs.push([wp[0], wp[1]]);
+        });
+
+        polyline.setLatLngs(latlngs);
+    }
+
+    function updateDronePosition(lat, lon) {
+        if (lat === 0 && lon === 0) return;
+        if (droneMarker === null) {
+            var icon = L.divIcon({
+                className: 'drone-icon',
+                html: '',
+                iconSize: [18, 18],
+                iconAnchor: [9, 9]
+            });
+            droneMarker = L.marker([lat, lon], {icon: icon})
+                .addTo(map)
+                .bindTooltip("Drone");
+        } else {
+            droneMarker.setLatLng([lat, lon]);
+        }
+    }
+
+    function centerOn(lat, lon, zoom) {
+        map.setView([lat, lon], zoom || 18);
+    }
+
+    // Expose functions globally so Python can call them
+    window.refreshWaypoints = refreshWaypoints;
+    window.updateDronePosition = updateDronePosition;
+    window.centerOn = centerOn;
+
+    // Force resize after load — helps with embedded QWebEngineView sizing
+    window.addEventListener('load', function() {
+        setTimeout(function() { map.invalidateSize(); }, 100);
+    });
+</script>
+</body>
+</html>

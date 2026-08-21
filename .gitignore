@@ -1,0 +1,55 @@
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+*.egg
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment & secrets
+.env
+.env.local
+app_config.json
+
+# Model weights (downloaded automatically)
+*.pt
+*.pth
+*.onnx
+*.bin
+models/
+
+# Data & logs
+data/
+logs/
+*.log
+
+# ML experiment tracking
+wandb/
+mlruns/
+runs/
+
+# Claude Code
+.claude/
+CLAUDE.md
+
+# Build artifacts
+generate_manual.py
+VLM-Drone_User_Manual.pdf
