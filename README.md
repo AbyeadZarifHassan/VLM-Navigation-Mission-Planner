@@ -10,8 +10,8 @@ This repository contains the **Mission Planner integration code, ground station 
 
 ## Authors
 
-- **Samiha Tarannum Noor** (Roll: 2320307) — [@Tarannum-Samiha](https://github.com/Tarannum-Samiha)
-- **Abyead Zarif Hassan** (Roll: 2320305) — [@AbyeadZarifHassan](https://github.com/AbyeadZarifHassan)
+- **Samiha Tarannum Noor**  — [@Tarannum-Samiha](https://github.com/Tarannum-Samiha)
+- **Abyead Zarif Hassan**  — [@AbyeadZarifHassan](https://github.com/AbyeadZarifHassan)
 
 **Supervisor:** Dr. Md Mehedi Hasan, Assistant Professor, Department of Robotics and Mechatronics Engineering, University of Dhaka.
 
@@ -79,13 +79,19 @@ The proposed pipeline consists of three primary stages executed off-board on a g
 ## Repository Structure
 
 ```
-VLM_Navigation_with_Mission_Planner_Integration/
-├── app/                    # Main application modules
-├── main.py                 # Entry point
-├── app_config.json         # Configuration
-├── requirements.txt        # Python dependencies
+VLM-Navigation-Mission-Planner/
+├── app/
+│   ├── drone/                  # MAVLink communication, mission logic, avoidance FSM
+│   ├── threads/                # Camera, drone, mission and avoidance worker threads
+│   ├── vision/                 # Depth estimation and VLM reasoning modules
+│   ├── widgets/                # Ground station GUI panels and Mission Planner view
+│   ├── main_window.py          # Application shell
+│   └── recorder.py             # Flight session recording
+├── main.py                     # Entry point
+├── app_config.example.json     # Configuration template
+├── requirements.txt            # Python dependencies
 ├── .gitignore
-├── LICENSE                 # MIT License
+├── LICENSE                     # MIT License
 └── README.md
 ```
 
@@ -121,23 +127,24 @@ The full real-time pipeline operated at **29.4 fps with sub-120 ms depth process
 
 ## Requirements
 
-- Python 3.9+
+- Python 3.9+ (developed and tested on 3.12)
 - PyTorch (for DepthAnything-V2 inference)
 - pymavlink (MAVLink communication)
 - opencv-python (frame processing)
-- API keys for OpenAI (GPT-4o, GPT-5) and Google AI Studio (Gemini 2.0 Flash) as needed
-- Mission Planner or compatible ArduPilot ground station (for waypoint cross-verification)
-- For open-source VLMs: local Ollama or HuggingFace transformers setup
+- PyQt5 (ground station interface)
+- API keys for OpenAI (GPT-4o, GPT-5) and Google AI Studio (Gemini 2.0 Flash), as needed
+- Mission Planner or a compatible ArduPilot ground station (for waypoint cross-verification)
+- For open-source VLMs: a local Ollama or HuggingFace Transformers setup
 
 ---
 
 ## Getting Started
 
-### 1. Clone the repository
+### 1. Get the code
 
 ```bash
-git clone https://github.com/AbyeadZarifHassan/VLM_Navigation_with_Mission_Planner_Integration.git
-cd VLM_Navigation_with_Mission_Planner_Integration
+git clone https://github.com/AbyeadZarifHassan/VLM-Navigation-Mission-Planner.git
+cd VLM-Navigation-Mission-Planner
 ```
 
 ### 2. Install dependencies
@@ -148,12 +155,28 @@ pip install -r requirements.txt
 
 ### 3. Configure API keys
 
-Create a `.env` file in the project root:
+Copy the configuration template:
 
+```bash
+copy app_config.example.json app_config.json     # Windows
+cp app_config.example.json app_config.json       # Linux / macOS
 ```
-OPENAI_API_KEY=your_key_here
-GEMINI_API_KEY=your_key_here
+
+Then open `app_config.json` and fill in the keys for the models you intend to use:
+
+```json
+{
+  "openai_api_key": "sk-...",
+  "gemini_api_key": "AIza..."
+}
 ```
+
+Keys may also be entered directly in the API key fields of the control panel at
+runtime; they are written back to `app_config.json` automatically. Either field
+may be left empty if the corresponding model is not required.
+
+> `app_config.json` is listed in `.gitignore` and is never tracked by version
+> control, so credentials remain local to the machine.
 
 ### 4. Launch the ground station application
 
@@ -174,6 +197,16 @@ The VLM produces one of the following discrete navigation commands per decision 
   Upper Right, Upper Left, Lower Right, Lower Left,
   Yaw 90° Clockwise, Yaw 90° Anti-clockwise }
 ```
+
+---
+
+## Safety Notice
+
+This software issues live flight commands to a physical airframe. Field trials
+were conducted in an open, permissioned area with a qualified operator holding
+manual override authority at all times. Anyone reproducing this work should
+validate the pipeline in simulation first, maintain an accessible override
+channel, and observe all local airspace regulations.
 
 ---
 
