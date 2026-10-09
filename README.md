@@ -10,8 +10,8 @@ This repository contains the **Mission Planner integration code, ground station 
 
 ## Authors
 
-- **Samiha Tarannum Noor**  [@Tarannum-Samiha](https://github.com/Tarannum-Samiha)
 - **Abyead Zarif Hassan**  [@AbyeadZarifHassan](https://github.com/AbyeadZarifHassan)
+- **Samiha Tarannum Noor**  [@Tarannum-Samiha](https://github.com/Tarannum-Samiha)
 
 **Supervisor:** Dr. Md Mehedi Hasan, Assistant Professor, Department of Robotics and Mechatronics Engineering, University of Dhaka.
 
@@ -214,13 +214,13 @@ channel, and observe all local airspace regulations.
 
 If you reference this work in your research, please cite it as a B.Sc. thesis from the University of Dhaka:
 
-> Noor, S. T., and Hassan, A. Z. (2026). *Advancing UAV Flight and Obstacle Avoidance with Cross-Modal Deep Learning Integration* [B.Sc. Thesis, University of Dhaka]. Department of Robotics and Mechatronics Engineering.
+> Hassan, A. Z., and  Noor, S. T. (2026). *Advancing UAV Flight and Obstacle Avoidance with Cross-Modal Deep Learning Integration* [B.Sc. Thesis, University of Dhaka]. Department of Robotics and Mechatronics Engineering.
 
 BibTeX:
 
 ```bibtex
 @mastersthesis{noor_hassan_2026_vlm_uav,
-  author  = {Noor, Samiha Tarannum and Hassan, Abyead Zarif},
+  author  = {Hassan, Abyead Zarif and Noor, Samiha Tarannum },
   title   = {Advancing UAV Flight and Obstacle Avoidance with Cross-Modal Deep Learning Integration},
   school  = {University of Dhaka},
   year    = {2026},
